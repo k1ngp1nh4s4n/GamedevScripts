@@ -24,3 +24,4 @@ public class ObjectOffset : MonoBehaviour
         transform.localScale = scaleOffset;
     }
 }
+

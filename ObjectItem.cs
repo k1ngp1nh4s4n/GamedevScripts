@@ -21,3 +21,4 @@ public class ObjectItem : MonoBehaviour
             rb.isKinematic = false;
     }
 }
+

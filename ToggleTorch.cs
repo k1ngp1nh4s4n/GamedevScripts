@@ -36,3 +36,4 @@ public class TorchToggle : MonoBehaviour
         toggleAction.performed -= ctx => ToggleTorch();
     }
 }
+

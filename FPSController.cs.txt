@@ -1,0 +1,128 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+[RequireComponent(typeof(CharacterController))]
+public class FPSController : MonoBehaviour
+{
+    [Header("Movement Settings")]
+    public bool enableMovement = true;
+    public float walkSpeed = 5f;
+    public bool enableSprint = true;
+    public float sprintSpeed = 9f;
+    public bool enableCrouch = true;
+    public float crouchSpeed = 3f;
+    public float crouchHeight = 1f;
+    public float normalHeight = 2f;
+
+    [Header("Jump Settings")]
+    public bool enableJump = true;
+    public float jumpHeight = 1.5f;
+
+    [Header("Gravity Settings")]
+    public float gravity = -9.81f;
+
+    [Header("Ground Check Settings")]
+    public Transform groundCheck;
+    public float groundCheckRadius = 0.4f;
+    public LayerMask groundMask;
+
+    [Header("Look Settings")]
+    public bool enableLook = true;
+    public float lookSensitivity = 2f;
+
+    [Header("Cursor Settings")]
+    public bool lockAndHideCursor = true;
+
+    private CharacterController controller;
+    private Vector2 moveInput;
+    private Vector2 lookInput;
+    private Vector3 velocity;
+    private bool isGrounded;
+    private bool isSprinting = false;
+    private bool isCrouching = false;
+    private Transform cameraTransform;
+    private float xRotation = 0f;
+
+    private void Awake()
+    {
+        controller = GetComponent<CharacterController>();
+        cameraTransform = Camera.main.transform;
+
+        if (lockAndHideCursor)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    void Update()
+    {
+        GroundCheck();
+
+        if (isGrounded && velocity.y < 0)
+            velocity.y = -2f;
+
+        if (enableMovement)
+        {
+            Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
+            float currentSpeed = isCrouching ? crouchSpeed : (isSprinting ? sprintSpeed : walkSpeed);
+            controller.Move(move * currentSpeed * Time.deltaTime);
+        }
+
+        // Apply gravity
+        velocity.y += gravity * Time.deltaTime;
+        controller.Move(velocity * Time.deltaTime);
+
+        if (enableLook)
+        {
+            float mouseX = lookInput.x * lookSensitivity;
+            float mouseY = lookInput.y * lookSensitivity;
+
+            xRotation -= mouseY;
+            xRotation = Mathf.Clamp(xRotation, -80f, 80f);
+
+            cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+            transform.Rotate(Vector3.up * mouseX);
+        }
+    }
+
+    void GroundCheck()
+    {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundCheckRadius, groundMask);
+    }
+
+    // PUBLIC INPUT EVENT FUNCTIONS
+
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        moveInput = context.ReadValue<Vector2>();
+    }
+
+    public void OnLook(InputAction.CallbackContext context)
+    {
+        lookInput = context.ReadValue<Vector2>();
+    }
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        if (enableJump && context.performed && isGrounded)
+        {
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+    }
+
+    public void OnSprint(InputAction.CallbackContext context)
+    {
+        if (enableSprint)
+            isSprinting = context.ReadValueAsButton();
+    }
+
+    public void OnCrouch(InputAction.CallbackContext context)
+    {
+        if (enableCrouch && context.performed)
+        {
+            isCrouching = !isCrouching;
+            controller.height = isCrouching ? crouchHeight : normalHeight;
+        }
+    }
+}

@@ -1,0 +1,23 @@
+using UnityEngine;
+
+public class ObjectItem : MonoBehaviour
+{
+    private Rigidbody rb;
+
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    public void OnPickUp()
+    {
+        if (rb != null)
+            rb.isKinematic = true;
+    }
+
+    public void OnDrop()
+    {
+        if (rb != null)
+            rb.isKinematic = false;
+    }
+}
